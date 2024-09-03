@@ -4,6 +4,7 @@ let interval;
 let predictedDays = 0;
 let plantImages = [];
 let currentCrop = 'strawberry';
+const initialImage = 'main.png';  // Define initial image globally
 
 // Crop-specific parameters
 const cropParameters = {
@@ -16,8 +17,7 @@ const cropParameters = {
         images: [
             "./2/1.png", "./2/2.png", "./2/3.png", "./2/4.png",
             "./2/5.png", "./2/6.png", "./2/7.png", "./2/8.png"
-        ],
-        initialImage: "./2/1.png"  // Add initial image reference
+        ]
     },
     tomatoes: {
         predictedDays: 50,
@@ -28,10 +28,10 @@ const cropParameters = {
         images: [
             "./3/1.png", "./3/2.png", "./3/3.png", "./3/4.png",
             "./3/5.png", "./3/6.png", "./3/7.png", "./3/8.png"
-        ],
-        initialImage: "./3/1.png"  // Add initial image reference
+        ]
     }
 };
+
 // DOM Elements
 const elements = {
     temperature: document.getElementById('temperature'),
@@ -86,15 +86,12 @@ function setParameters(crop) {
     
     elements.predictedDays.textContent = `Predicted Days: ${predictedDays}`;
     
-    // Set initial image when changing crops
-    if (params.initialImage) {
-        elements.plantImage.src = params.initialImage;
-    }
+    // Set initial image to main.png when changing crops
+    elements.plantImage.src = initialImage;
     
     updateAllDynamicParameters();
     updateActuators();
 }
-
 
 // Update all dynamic parameters
 function updateAllDynamicParameters() {
@@ -240,6 +237,7 @@ function startSimulation() {
     stopSimulation(); // Reset if already running
     day = 0;
     updateDayAndGrowth();
+    elements.plantImage.src = plantImages[0]; // Set to first growth stage image
     updateSimulation();
     interval = setInterval(updateSimulation, 1000);
     console.log('Simulation started');
@@ -254,13 +252,10 @@ function stopSimulation() {
     day = 0;
     updateDayAndGrowth();
     
-    // Reset plant image to initial state
-    const initialImage = cropParameters[currentCrop].initialImage;
-    if (initialImage) {
-        elements.plantImage.src = initialImage;
-    }
+    // Reset plant image to initial state (main.png)
+    elements.plantImage.src = initialImage;
     
-    console.log('Simulation stopped, growth and days reset to 0, main picture reset');
+    console.log('Simulation stopped, growth and days reset to 0, main picture reset to main.png');
 }
 
 function updateDayAndGrowth() {
