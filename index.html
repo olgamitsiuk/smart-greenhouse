@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Greenhouse System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="main-container">
+        <h1 id="main-title">Smart Greenhouse System</h1>
+        <div id="container">
+            <div id="left-column" class="column">
+                <section id="plant-selection">
+                    <h3>Select Plant</h3>
+                    <select id="cropSelect">
+                        <option value="strawberry">Strawberry</option>
+                        <option value="tomatoes">Tomatoes</option>
+                    </select>
+                </section>
+                <section id="initial-parameters">
+                    <h3>Initial Parameters</h3>
+                    <div class="parameter">
+                        <span class="parameter-name">Temperature:</span>
+                        <div class="parameter-value-container">
+                            <span id="temperature" class="parameter-value">21.11</span>
+                            <span class="parameter-unit">°C</span>
+                        </div>
+                        <div class="parameter-buttons">
+                            <button class="minus">-</button>
+                            <button class="plus">+</button>
+                        </div>
+                    </div>
+                    <div class="parameter">
+                        <span class="parameter-name">Light Intensity:</span>
+                        <div class="parameter-value-container">
+                            <span id="lightIntensity" class="parameter-value">55.00</span>
+                            <span class="parameter-unit">%</span>
+                        </div>
+                        <div class="parameter-buttons">
+                            <button class="minus">-</button>
+                            <button class="plus">+</button>
+                        </div>
+                    </div>
+                    <div class="parameter">
+                        <span class="parameter-name">Moisture:</span>
+                        <div class="parameter-value-container">
+                            <span id="moisture" class="parameter-value">43.30</span>
+                            <span class="parameter-unit">%</span>
+                        </div>
+                        <div class="parameter-buttons">
+                            <button class="minus">-</button>
+                            <button class="plus">+</button>
+                        </div>
+                    </div>
+                    <div class="parameter">
+                        <span class="parameter-name">Humidity:</span>
+                        <div class="parameter-value-container">
+                            <span id="humidity" class="parameter-value">60.00</span>
+                            <span class="parameter-unit">%</span>
+                        </div>
+                        <div class="parameter-buttons">
+                            <button class="minus">-</button>
+                            <button class="plus">+</button>
+                        </div>
+                    </div>
+                    <div class="parameter">
+                        <span class="parameter-name">Window:</span>
+                        <span id="window" class="parameter-value-container">Closed</span>
+                        <button class="toggle">Toggle</button>
+                    </div>
+                    <div class="parameter">
+                        <span class="parameter-name">Fan:</span>
+                        <span id="fan" class="parameter-value-container">Off</span>
+                        <button class="toggle">Toggle</button>
+                    </div>
+                </section>
+                <div id="predictedDays">Predicted Days: 0</div>
+                <button id="startBtn">Start Simulation</button>
+                <button id="stopBtn">Stop Simulation</button>
+            </div>
+            <div id="center-column" class="column">
+                <div id="imageContainer">
+                    <img src="main.png" id="plantImage" alt="Plant">
+                </div>
+                <div id="growthStatus">Crop Growth: 0.00%</div>
+                <div id="dayCount">Day: 0</div>
+            </div>
+            <div id="right-column" class="column">
+                <section id="sensor-readings">
+                    <h3>Sensor Readings</h3>
+                    <div class="dynamic-parameter">
+                        <span>Temperature: <span id="dynamicTemperature">21.11</span> °C</span>
+                        <div class="indicator-buttons">
+                            <button id="temperatureLow" class="indicator">Low</button>
+                            <button id="temperatureHigh" class="indicator">High</button>
+                        </div>
+                    </div>
+                    <div class="dynamic-parameter">
+                        <span>Moisture: <span id="dynamicMoisture">43.30</span> %</span>
+                        <div class="indicator-buttons">
+                            <button id="moistureLow" class="indicator">Low</button>
+                            <button id="moistureHigh" class="indicator">High</button>
+                        </div>
+                    </div>
+                    <div class="dynamic-parameter">
+                        <span>Humidity: <span id="dynamicHumidity">60.00</span> %</span>
+                        <div class="indicator-buttons">
+                            <button id="humidityLow" class="indicator">Low</button>
+                            <button id="humidityHigh" class="indicator">High</button>
+                        </div>
+                    </div>
+                    <div class="dynamic-parameter">
+                        <span>Light Level: <span id="dynamicLightLevel">55.00</span> %</span>
+                        <div class="indicator-buttons">
+                            <button id="lightIntensityLow" class="indicator">Low</button>
+                            <button id="lightIntensityHigh" class="indicator">High</button>
+                        </div>
+                    </div>
+                </section>
+                <section id="system-control">
+                    <h3>System Control</h3>
+                    <div class="actuator">
+                        <span>Heater: <span id="heaterStatus" class="actuator-status">Off</span></span>
+                    </div>
+                    <div class="actuator">
+                        <span>Cooler: <span id="coolerStatus" class="actuator-status">Off</span></span>
+                    </div>
+                    <div class="actuator">
+                        <span>Humidifier: <span id="humidifierStatus" class="actuator-status">Off</span></span>
+                    </div>
+                    <div class="actuator">
+                        <span>Dehumidifier: <span id="dehumidifierStatus" class="actuator-status">Off</span></span>
+                    </div>
+                    <div class="actuator">
+                        <span>Irrigation: <span id="irrigationStatus" class="actuator-status">Off</span></span>
+                    </div>
+                    <div class="actuator">
+                        <span>Lights: <span id="lightsStatus" class="actuator-status">Off</span></span>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
