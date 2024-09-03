@@ -4,7 +4,7 @@ let interval;
 let predictedDays = 0;
 let plantImages = [];
 let currentCrop = 'strawberry';
-const initialImage = 'main.png';  // Define initial image globally
+const initialImage = 'main.png';
 
 // Crop-specific parameters
 const cropParameters = {
@@ -86,7 +86,6 @@ function setParameters(crop) {
     
     elements.predictedDays.textContent = `Predicted Days: ${predictedDays}`;
     
-    // Set initial image to main.png when changing crops
     elements.plantImage.src = initialImage;
     
     updateAllDynamicParameters();
@@ -95,9 +94,7 @@ function setParameters(crop) {
 
 // Update all dynamic parameters
 function updateAllDynamicParameters() {
-    Object.keys(dynamicElements).forEach(param => {
-        updateDynamicParameter(param);
-    });
+    Object.keys(dynamicElements).forEach(updateDynamicParameter);
 }
 
 // Update a single dynamic parameter
@@ -107,14 +104,11 @@ function updateDynamicParameter(param) {
     if (initialElement && dynamicElement) {
         const initialValue = parseFloat(initialElement.textContent);
         const targetValue = cropParameters[currentCrop][param];
-        const deviation = targetValue * 0.1; // 10% deviation
+        const deviation = targetValue * 0.1;
         const newValue = initialValue + (Math.random() - 0.5) * 2 * deviation;
         dynamicElement.textContent = newValue.toFixed(2);
         
         updateIndicator(param, newValue, initialValue);
-        
-        // Log the update
-        console.log(`Updated ${param}: ${newValue.toFixed(2)} (Initial: ${initialValue}, Target: ${targetValue})`);
     }
 }
 
@@ -123,7 +117,7 @@ function updateIndicator(param, currentValue, initialValue) {
     const lowElement = document.getElementById(`${param}Low`);
     const highElement = document.getElementById(`${param}High`);
     if (lowElement && highElement) {
-        const threshold = param === 'temperature' ? 2 : 5; // Different threshold for temperature
+        const threshold = param === 'temperature' ? 2 : 5;
         lowElement.classList.toggle('active', currentValue < initialValue - threshold);
         highElement.classList.toggle('active', currentValue > initialValue + threshold);
     }
@@ -136,44 +130,24 @@ function updateActuators() {
     const moisture = parseFloat(dynamicElements.moisture.textContent);
     const humidity = parseFloat(dynamicElements.humidity.textContent);
     const light = parseFloat(dynamicElements.lightIntensity.textContent);
-    
-    console.log('Updating actuators:');
-    console.log(`Temperature: ${temp} (Ideal: ${params.temperature})`);
-    console.log(`Moisture: ${moisture} (Ideal: ${params.moisture})`);
-    console.log(`Humidity: ${humidity} (Ideal: ${params.humidity})`);
-    console.log(`Light: ${light} (Ideal: ${params.lightIntensity})`);
 
     setActuatorStatus('heater', temp < params.temperature - 2);
     setActuatorStatus('cooler', temp > params.temperature + 2);
     setActuatorStatus('humidifier', humidity < params.humidity - 5);
     setActuatorStatus('dehumidifier', humidity > params.humidity + 5);
     setActuatorStatus('irrigation', moisture < params.moisture - 10);
-    
-    // Simplified light actuator logic
-    const lightsOn = light < params.lightIntensity;
-    setActuatorStatus('lights', lightsOn);
-    console.log(`Light actuator should be: ${lightsOn ? 'On' : 'Off'}`);
+    setActuatorStatus('lights', light < params.lightIntensity);
 }
-// Separate function to update light actuator
-function updateLightActuator(currentLight, idealLight) {
-    const lightThreshold = idealLight - 10;
-    const shouldTurnOn = currentLight < lightThreshold;
-    console.log(`Light actuator check: Current ${currentLight}, Ideal ${idealLight}, Threshold ${lightThreshold}, Should turn on: ${shouldTurnOn}`);
-    setActuatorStatus('lights', shouldTurnOn);
-}
-
 
 // Set actuator status
 function setActuatorStatus(actuatorId, isOn) {
-    const actuator = document.getElementById(`${actuatorId}Status`);
+    const actuator = actuators[actuatorId];
     if (actuator) {
         actuator.textContent = isOn ? 'On' : 'Off';
         actuator.closest('.actuator').classList.toggle('active', isOn);
-        console.log(`Actuator ${actuatorId} set to ${isOn ? 'On' : 'Off'}`);
-    } else {
-        console.error(`Actuator element not found for ID: ${actuatorId}Status`);
     }
 }
+
 // Update parameter
 function updateParameter(param, increment) {
     const element = elements[param];
@@ -191,7 +165,6 @@ function updateParameter(param, increment) {
         }
         element.textContent = value.toFixed(2);
         
-        // Update the ideal parameter in cropParameters
         cropParameters[currentCrop][param] = value;
         
         recalculatePredictedDays();
@@ -210,13 +183,13 @@ function recalculatePredictedDays() {
         const targetValue = params[param];
         const deviation = Math.abs(currentValue - targetValue);
         
-        if (deviation > targetValue * 0.1) { // If deviation is more than 10%
-            baseDays += Math.floor(deviation / 5); // Add 1 day for every 5 units of deviation
+        if (deviation > targetValue * 0.1) {
+            baseDays += Math.floor(deviation / 5);
         }
     });
 
-    if (elements.window.textContent === "Closed") baseDays += 2;
-    if (elements.fan.textContent === "Off") baseDays += 2;
+    if (elements.window.textContent === "Closed") baseDays += 1;
+    if (elements.fan.textContent === "Off") baseDays += 1;
     
     predictedDays = Math.max(baseDays, 1);
     elements.predictedDays.textContent = `Predicted Days: ${predictedDays}`;
@@ -226,7 +199,11 @@ function recalculatePredictedDays() {
 function toggleState(elementId) {
     const element = elements[elementId];
     if (element) {
-        element.textContent = element.textContent === "Closed" ? "Open" : "Closed";
+        if (elementId === 'window') {
+            element.textContent = element.textContent === "Closed" ? "Open" : "Closed";
+        } else if (elementId === 'fan') {
+            element.textContent = element.textContent === "Off" ? "On" : "Off";
+        }
         recalculatePredictedDays();
         updateActuators();
     }
@@ -234,13 +211,12 @@ function toggleState(elementId) {
 
 // Start simulation
 function startSimulation() {
-    stopSimulation(); // Reset if already running
+    stopSimulation();
     day = 0;
     updateDayAndGrowth();
-    elements.plantImage.src = plantImages[0]; // Set to first growth stage image
+    elements.plantImage.src = plantImages[0];
     updateSimulation();
     interval = setInterval(updateSimulation, 1000);
-    console.log('Simulation started');
 }
 
 // Stop simulation
@@ -248,14 +224,10 @@ function stopSimulation() {
     clearInterval(interval);
     Object.keys(actuators).forEach(actuator => setActuatorStatus(actuator, false));
     
-    // Reset day count and growth
     day = 0;
     updateDayAndGrowth();
     
-    // Reset plant image to initial state (main.png)
     elements.plantImage.src = initialImage;
-    
-    console.log('Simulation stopped, growth and days reset to 0, main picture reset to main.png');
 }
 
 function updateDayAndGrowth() {
@@ -274,7 +246,6 @@ function updateSimulation() {
         elements.plantImage.src = plantImages[imageIndex];
         
         updateDayAndGrowth();
-
         updateAllDynamicParameters();
         updateActuators();
     }
@@ -293,7 +264,7 @@ function attachEventListeners() {
     document.querySelectorAll('.parameter-buttons button').forEach(button => {
         button.addEventListener('click', function() {
             const parameter = this.closest('.parameter').querySelector('.parameter-value').id;
-            const increment = this.classList.contains('plus') ? 1 : -1;
+            const increment = this.textContent.trim() === '+' ? 1 : -1;
             updateParameter(parameter, increment);
         });
     });
@@ -304,12 +275,7 @@ function attachEventListeners() {
             toggleState(parameter);
         });
     });
-    
 }
 
 // Initialize the simulation when the DOM is fully loaded
-document.addEventListener('DOMContentLoaded', () => {
-    initSimulation();
-    attachEventListeners();
-    console.log('Simulation initialized');
-});
+document.addEventListener('DOMContentLoaded', initSimulation);

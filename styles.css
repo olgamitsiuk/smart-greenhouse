@@ -241,4 +241,38 @@ button:hover {
     .parameter-buttons, .indicator-buttons {
         margin-top: 5px;
     }
+}/* Responsive design */
+@media (max-width: 1024px) {
+    #container {
+        flex-direction: column;
+    }
+
+    #left-column, #center-column, #right-column {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+
+    #main-container {
+        padding: 10px;
+    }
+
+    .column {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .parameter {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .parameter-buttons {
+        margin-top: 5px;
+    }
 }
