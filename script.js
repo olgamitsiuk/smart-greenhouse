@@ -16,7 +16,8 @@ const cropParameters = {
         images: [
             "./2/1.png", "./2/2.png", "./2/3.png", "./2/4.png",
             "./2/5.png", "./2/6.png", "./2/7.png", "./2/8.png"
-        ]
+        ],
+        initialImage: "./2/1.png"  // Add initial image reference
     },
     tomatoes: {
         predictedDays: 50,
@@ -27,10 +28,10 @@ const cropParameters = {
         images: [
             "./3/1.png", "./3/2.png", "./3/3.png", "./3/4.png",
             "./3/5.png", "./3/6.png", "./3/7.png", "./3/8.png"
-        ]
+        ],
+        initialImage: "./3/1.png"  // Add initial image reference
     }
 };
-
 // DOM Elements
 const elements = {
     temperature: document.getElementById('temperature'),
@@ -46,6 +47,14 @@ const elements = {
     cropSelect: document.getElementById('cropSelect'),
     startBtn: document.getElementById('startBtn'),
     stopBtn: document.getElementById('stopBtn')
+};
+
+// Dynamic Elements
+const dynamicElements = {
+    temperature: document.getElementById('dynamicTemperature'),
+    lightIntensity: document.getElementById('dynamicLightLevel'),
+    moisture: document.getElementById('dynamicMoisture'),
+    humidity: document.getElementById('dynamicHumidity')
 };
 
 // Actuator Elements
@@ -77,44 +86,42 @@ function setParameters(crop) {
     
     elements.predictedDays.textContent = `Predicted Days: ${predictedDays}`;
     
-    updateDynamicParameters();
-    updateActuatorsForNewCrop(params);
-}
-
-function updateActuatorsForNewCrop(params) {
-    const temp = parseFloat(elements.temperature.textContent);
-    const moisture = parseFloat(elements.moisture.textContent);
-    const humidity = parseFloat(elements.humidity.textContent);
-    const light = parseFloat(elements.lightIntensity.textContent);
+    // Set initial image when changing crops
+    if (params.initialImage) {
+        elements.plantImage.src = params.initialImage;
+    }
     
-    setActuatorStatus('heaterStatus', temp < params.temperature - 2);
-    setActuatorStatus('coolerStatus', temp > params.temperature + 2);
-    setActuatorStatus('humidifierStatus', humidity < params.humidity - 5);
-    setActuatorStatus('dehumidifierStatus', humidity > params.humidity + 5);
-    setActuatorStatus('irrigationStatus', moisture < params.moisture - 10);
-    setActuatorStatus('lightsStatus', light < params.lightIntensity - 10);
-}
-
-// Update dynamic parameters
-function updateDynamicParameters() {
-    const params = cropParameters[currentCrop];
-    ['Temperature', 'LightIntensity', 'Moisture', 'Humidity'].forEach(param => {
-        const lowercaseParam = param.toLowerCase();
-        const dynamicElement = document.getElementById(`dynamic${param}`);
-        const initialElement = document.getElementById(lowercaseParam);
-        if (dynamicElement && initialElement) {
-            const initialValue = parseFloat(initialElement.textContent);
-            const targetValue = params[lowercaseParam];
-            const newValue = initialValue + (Math.random() - 0.5) * 2 * (targetValue * 0.1);
-            dynamicElement.textContent = newValue.toFixed(2);
-            
-            updateIndicator(lowercaseParam, newValue, initialValue);
-        }
-    });
-    
+    updateAllDynamicParameters();
     updateActuators();
 }
 
+
+// Update all dynamic parameters
+function updateAllDynamicParameters() {
+    Object.keys(dynamicElements).forEach(param => {
+        updateDynamicParameter(param);
+    });
+}
+
+// Update a single dynamic parameter
+function updateDynamicParameter(param) {
+    const initialElement = elements[param];
+    const dynamicElement = dynamicElements[param];
+    if (initialElement && dynamicElement) {
+        const initialValue = parseFloat(initialElement.textContent);
+        const targetValue = cropParameters[currentCrop][param];
+        const deviation = targetValue * 0.1; // 10% deviation
+        const newValue = initialValue + (Math.random() - 0.5) * 2 * deviation;
+        dynamicElement.textContent = newValue.toFixed(2);
+        
+        updateIndicator(param, newValue, initialValue);
+        
+        // Log the update
+        console.log(`Updated ${param}: ${newValue.toFixed(2)} (Initial: ${initialValue}, Target: ${targetValue})`);
+    }
+}
+
+// Update indicator based on current and initial values
 function updateIndicator(param, currentValue, initialValue) {
     const lowElement = document.getElementById(`${param}Low`);
     const highElement = document.getElementById(`${param}High`);
@@ -128,95 +135,54 @@ function updateIndicator(param, currentValue, initialValue) {
 // Update actuators based on dynamic parameters
 function updateActuators() {
     const params = cropParameters[currentCrop];
-    const temp = parseFloat(document.getElementById('dynamicTemperature').textContent);
-    const moisture = parseFloat(document.getElementById('dynamicMoisture').textContent);
-    const humidity = parseFloat(document.getElementById('dynamicHumidity').textContent);
-    const light = parseFloat(document.getElementById('dynamicLightLevel').textContent);
+    const temp = parseFloat(dynamicElements.temperature.textContent);
+    const moisture = parseFloat(dynamicElements.moisture.textContent);
+    const humidity = parseFloat(dynamicElements.humidity.textContent);
+    const light = parseFloat(dynamicElements.lightIntensity.textContent);
     
-    setActuatorStatus('heaterStatus', temp < params.temperature - 2);
-    setActuatorStatus('coolerStatus', temp > params.temperature + 2);
-    setActuatorStatus('humidifierStatus', humidity < params.humidity - 5);
-    setActuatorStatus('dehumidifierStatus', humidity > params.humidity + 5);
-    setActuatorStatus('irrigationStatus', moisture < params.moisture - 10);
-    setActuatorStatus('lightsStatus', light < params.lightIntensity - 10);
+    console.log('Updating actuators:');
+    console.log(`Temperature: ${temp} (Ideal: ${params.temperature})`);
+    console.log(`Moisture: ${moisture} (Ideal: ${params.moisture})`);
+    console.log(`Humidity: ${humidity} (Ideal: ${params.humidity})`);
+    console.log(`Light: ${light} (Ideal: ${params.lightIntensity})`);
+
+    setActuatorStatus('heater', temp < params.temperature - 2);
+    setActuatorStatus('cooler', temp > params.temperature + 2);
+    setActuatorStatus('humidifier', humidity < params.humidity - 5);
+    setActuatorStatus('dehumidifier', humidity > params.humidity + 5);
+    setActuatorStatus('irrigation', moisture < params.moisture - 10);
+    
+    // Simplified light actuator logic
+    const lightsOn = light < params.lightIntensity;
+    setActuatorStatus('lights', lightsOn);
+    console.log(`Light actuator should be: ${lightsOn ? 'On' : 'Off'}`);
 }
+// Separate function to update light actuator
+function updateLightActuator(currentLight, idealLight) {
+    const lightThreshold = idealLight - 10;
+    const shouldTurnOn = currentLight < lightThreshold;
+    console.log(`Light actuator check: Current ${currentLight}, Ideal ${idealLight}, Threshold ${lightThreshold}, Should turn on: ${shouldTurnOn}`);
+    setActuatorStatus('lights', shouldTurnOn);
+}
+
+
 // Set actuator status
 function setActuatorStatus(actuatorId, isOn) {
-    const actuator = document.getElementById(actuatorId);
+    const actuator = document.getElementById(`${actuatorId}Status`);
     if (actuator) {
         actuator.textContent = isOn ? 'On' : 'Off';
         actuator.closest('.actuator').classList.toggle('active', isOn);
-    }
-}
-
-// Toggle actuator
-function toggleActuator(actuatorId) {
-    const actuator = document.getElementById(actuatorId);
-    if (actuator) {
-        const newStatus = actuator.textContent.trim() !== 'On';
-        setActuatorStatus(actuatorId, newStatus);
-    }
-}
-function setAllActuatorsOff() {
-    Object.keys(actuators).forEach(actuator => setActuatorStatus(actuator + 'Status', false));
-}
-
-// Start simulation
-function startSimulation() {
-    stopSimulation(); // Reset if already running
-    setAllActuatorsOff(); // Turn off all actuators before starting
-    day = 0;
-    updateSimulation();
-    interval = setInterval(updateSimulation, 1000);
-}
-
-// Stop simulation
-function stopSimulation() {
-    clearInterval(interval);
-    setAllActuatorsOff(); // Turn off all actuators when stopping
-}
-
-// Update simulation
-function updateSimulation() {
-    if (day >= predictedDays) {
-        stopSimulation();
+        console.log(`Actuator ${actuatorId} set to ${isOn ? 'On' : 'Off'}`);
     } else {
-        const imageIndex = Math.floor((day / (predictedDays - 1)) * (plantImages.length - 1));
-        elements.plantImage.src = plantImages[imageIndex];
-        elements.dayCount.innerText = `Day: ${day + 1}`;
-        const growthPercentage = ((day + 1) / predictedDays) * 100;
-        elements.growthStatus.innerText = `Crop Growth: ${growthPercentage.toFixed(2)}%`;
-        day++;
-
-        updateDynamicParameters();
+        console.error(`Actuator element not found for ID: ${actuatorId}Status`);
     }
 }
-
-// Recalculate predicted days
-function recalculatePredictedDays() {
-    const params = cropParameters[currentCrop];
-    let baseDays = params.predictedDays;
-    
-    const temp = parseFloat(elements.temperature.textContent);
-    const light = parseFloat(elements.lightIntensity.textContent);
-    const moisture = parseFloat(elements.moisture.textContent);
-    
-    if (temp > params.temperature + 5) baseDays -= 5;
-    if (light > params.lightIntensity + 10) baseDays -= 5;
-    if (moisture < params.moisture - 10) baseDays += 5;
-    if (elements.window.textContent === "Closed") baseDays += 2;
-    if (elements.fan.textContent === "Off") baseDays += 2;
-    
-    predictedDays = Math.max(baseDays, 1);
-    elements.predictedDays.textContent = `Predicted Days: ${predictedDays}`;
-}
-
-// Update numeric parameter
-function updateParameter(elementId, increment) {
-    const element = document.getElementById(elementId);
+// Update parameter
+function updateParameter(param, increment) {
+    const element = elements[param];
     if (element) {
         let value = parseFloat(element.textContent) + increment;
-        switch (elementId) {
+        switch (param) {
             case 'temperature':
                 value = Math.max(0, Math.min(40, value));
                 break;
@@ -227,16 +193,95 @@ function updateParameter(elementId, increment) {
                 break;
         }
         element.textContent = value.toFixed(2);
+        
+        // Update the ideal parameter in cropParameters
+        cropParameters[currentCrop][param] = value;
+        
         recalculatePredictedDays();
+        updateDynamicParameter(param);
+        updateActuators();
     }
+}
+
+// Recalculate predicted days
+function recalculatePredictedDays() {
+    const params = cropParameters[currentCrop];
+    let baseDays = params.predictedDays;
+    
+    ['temperature', 'lightIntensity', 'moisture', 'humidity'].forEach(param => {
+        const currentValue = parseFloat(dynamicElements[param].textContent);
+        const targetValue = params[param];
+        const deviation = Math.abs(currentValue - targetValue);
+        
+        if (deviation > targetValue * 0.1) { // If deviation is more than 10%
+            baseDays += Math.floor(deviation / 5); // Add 1 day for every 5 units of deviation
+        }
+    });
+
+    if (elements.window.textContent === "Closed") baseDays += 2;
+    if (elements.fan.textContent === "Off") baseDays += 2;
+    
+    predictedDays = Math.max(baseDays, 1);
+    elements.predictedDays.textContent = `Predicted Days: ${predictedDays}`;
 }
 
 // Toggle state (window/fan)
 function toggleState(elementId) {
-    const element = document.getElementById(elementId);
+    const element = elements[elementId];
     if (element) {
         element.textContent = element.textContent === "Closed" ? "Open" : "Closed";
         recalculatePredictedDays();
+        updateActuators();
+    }
+}
+
+// Start simulation
+function startSimulation() {
+    stopSimulation(); // Reset if already running
+    day = 0;
+    updateDayAndGrowth();
+    updateSimulation();
+    interval = setInterval(updateSimulation, 1000);
+    console.log('Simulation started');
+}
+
+// Stop simulation
+function stopSimulation() {
+    clearInterval(interval);
+    Object.keys(actuators).forEach(actuator => setActuatorStatus(actuator, false));
+    
+    // Reset day count and growth
+    day = 0;
+    updateDayAndGrowth();
+    
+    // Reset plant image to initial state
+    const initialImage = cropParameters[currentCrop].initialImage;
+    if (initialImage) {
+        elements.plantImage.src = initialImage;
+    }
+    
+    console.log('Simulation stopped, growth and days reset to 0, main picture reset');
+}
+
+function updateDayAndGrowth() {
+    elements.dayCount.innerText = `Day: ${day}`;
+    const growthPercentage = (day / predictedDays) * 100;
+    elements.growthStatus.innerText = `Crop Growth: ${growthPercentage.toFixed(2)}%`;
+}
+
+// Update simulation
+function updateSimulation() {
+    if (day >= predictedDays) {
+        stopSimulation();
+    } else {
+        day++;
+        const imageIndex = Math.floor((day / predictedDays) * (plantImages.length - 1));
+        elements.plantImage.src = plantImages[imageIndex];
+        
+        updateDayAndGrowth();
+
+        updateAllDynamicParameters();
+        updateActuators();
     }
 }
 
@@ -253,7 +298,7 @@ function attachEventListeners() {
     document.querySelectorAll('.parameter-buttons button').forEach(button => {
         button.addEventListener('click', function() {
             const parameter = this.closest('.parameter').querySelector('.parameter-value').id;
-            const increment = this.textContent === '+' ? 1 : -1;
+            const increment = this.classList.contains('plus') ? 1 : -1;
             updateParameter(parameter, increment);
         });
     });
@@ -265,21 +310,11 @@ function attachEventListeners() {
         });
     });
     
-    Object.keys(actuators).forEach(actuator => {
-        const element = actuators[actuator];
-        if (element) {
-            element.closest('.actuator').addEventListener('click', () => toggleActuator(actuator + 'Status'));
-        }
-    });
 }
 
 // Initialize the simulation when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     initSimulation();
-    setAllActuatorsOff(); // Ensure all actuators are off at initial load
-    elements.cropSelect.addEventListener('change', () => {
-        currentCrop = elements.cropSelect.value;
-        setParameters(currentCrop);
-        // The setParameters function now includes actuator updates
-    });
+    attachEventListeners();
+    console.log('Simulation initialized');
 });
